@@ -94,7 +94,7 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
             
-            if key_lst[pg.K_LSHIFT]:  # 左Shiftを押しているとき高速化
+            if key_lst[pg.K_LSHIFT]:  # 左Shiftを押しているとき低速化
                 self.speed = 3
             else:
                 self.speed = 10
@@ -247,18 +247,6 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
-# class Time:
-    # def __init__(self):
-        # self.color = (0, 0, 255)
-        # self.value = 0
-        # self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        # self.rect = self.image.get_rect()
-        # self.rect.center = 300, HEIGHT-50
-
-    # def update(self, screen: pg.Surface):
-        # self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        # screen.blit(self.image, self.rect)
-
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -317,7 +305,6 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
-        # Time.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
