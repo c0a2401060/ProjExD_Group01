@@ -282,7 +282,7 @@ def main():
         if tmr % 50 == 0:  #1秒ずつ減る
             get_time.value-=1
 
-        if get_time.value <= 55:
+        if get_time.value <= 10:
             get_time.color = (255, 0, 0)
             if tmr % 5 == 0:
                 get_time.color = (255, 255, 255)
