@@ -124,7 +124,7 @@ class Bomb(pg.sprite.Sprite):
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
 
-        if 1500 < tmr <= 3000:
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
             self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
             if self.vx == 0 and self.vy == 0:
                 while True:
@@ -141,21 +141,21 @@ class Bomb(pg.sprite.Sprite):
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        if 1500 < tmr <= 3000:
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
             self.speed = 4
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         
-        else:
+        else: #時間が３０秒未満なら爆弾の動きは通常
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
 
         
         if check_bound(self.rect) != (True, True):
-            if 1500 < tmr <= 3000:
+            if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾の動きは反射
                 self.vx *= -1
                 self.vy *= -1
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
 
-            if tmr < 1500:
+            if tmr < 1500: # 時間が３０秒未満なら通常
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
                 self.kill()
 
@@ -232,10 +232,10 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        if tmr < 1500:
+        if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
             self.interval = random.randint(60, 70)  # 爆弾投下インターバル
 
-        if 1500 < tmr <= 3000:
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
             self.interval = random.randint(25, 32)
 
     def update(self):
@@ -295,7 +295,7 @@ def main():
         if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy(tmr))
         
-        if tmr%100 ==0 and 1500 < tmr <= 3000:
+        if tmr%100 ==0 and 1500 < tmr <= 3000: # 100フレームに1回，敵機を出現させる
             emys.add(Enemy(tmr))
 
         for emy in emys:
