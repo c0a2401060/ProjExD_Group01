@@ -6,8 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 1100  # ゲームウィンドウの幅
-HEIGHT = 650  # ゲームウィンドウの高さ
+WIDTH = 700  # ゲームウィンドウの幅
+HEIGHT =600  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -203,11 +203,11 @@ class Enemy(pg.sprite.Sprite):
     
     def __init__(self):
         super().__init__()
-        self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 0.8)
+        self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 2)
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
+        self.rect.center = ((WIDTH - 128) / 1.7, HEIGHT /7)
         self.vx, self.vy = 0, +6
-        self.bound = random.randint(50, HEIGHT//2)  # 停止位置
+        self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
 
@@ -248,7 +248,7 @@ def main():
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
 
-    bird = Bird(3, (900, 400))
+    bird = Bird(3, (300, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
