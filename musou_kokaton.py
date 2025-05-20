@@ -6,8 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 1100  # ゲームウィンドウの幅
-HEIGHT = 650  # ゲームウィンドウの高さ
+WIDTH = 600  # ゲームウィンドウの幅
+HEIGHT = 700  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -55,7 +55,7 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -79,7 +79,7 @@ class Bird(pg.sprite.Sprite):
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -108,33 +108,56 @@ class Bomb(pg.sprite.Sprite):
     """
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "Enemy", bird: Bird):
+    def __init__(self, emy: "Enemy", bird: Bird, tmr):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        rad = 15  # 爆弾円の半径：10以上50以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
         color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
         pg.draw.circle(self.image, color, (rad, rad), rad)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
+
+        if 1500 < tmr <= 3000:
+            self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+            if self.vx == 0 and self.vy == 0:
+                while True:
+                    self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+                    if self.vx != 0 or self.vy != 0:
+                        break  
+
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        self.speed = 6
+        self.speed = 10
 
-    def update(self):
+    def update(self, tmr):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        if 1500 < tmr <= 3000:
+            self.speed = 4
+            self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        
+        else:
+            self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+
+        
         if check_bound(self.rect) != (True, True):
-            self.kill()
+            if 1500 < tmr <= 3000:
+                self.vx *= -1
+                self.vy *= -1
+                self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+
+            if tmr < 1500:
+                self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+                self.kill()
 
 
 class Beam(pg.sprite.Sprite):
@@ -201,7 +224,7 @@ class Enemy(pg.sprite.Sprite):
     """
     imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)]
     
-    def __init__(self):
+    def __init__(self, tmr):
         super().__init__()
         self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 0.8)
         self.rect = self.image.get_rect()
@@ -209,7 +232,11 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        if tmr < 1500:
+            self.interval = random.randint(60, 70)  # 爆弾投下インターバル
+
+        if 1500 < tmr <= 3000:
+            self.interval = random.randint(25, 32)
 
     def update(self):
         """
@@ -248,7 +275,7 @@ def main():
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
 
-    bird = Bird(3, (900, 400))
+    bird = Bird(3, (300, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
@@ -265,13 +292,16 @@ def main():
                 beams.add(Beam(bird))
         screen.blit(bg_img, [0, 0])
 
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+        if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy(tmr))
+        
+        if tmr%100 ==0 and 1500 < tmr <= 3000:
+            emys.add(Enemy(tmr))
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                bombs.add(Bomb(emy, bird, tmr))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -294,7 +324,7 @@ def main():
         beams.draw(screen)
         emys.update()
         emys.draw(screen)
-        bombs.update()
+        bombs.update(tmr)
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
