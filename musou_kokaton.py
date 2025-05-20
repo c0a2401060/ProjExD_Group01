@@ -224,11 +224,6 @@ class Enemy(pg.sprite.Sprite):
 
 
 class Score:
-    """
-    打ち落とした爆弾，敵機の数をスコアとして表示するクラス
-    爆弾：1点
-    敵機：10点
-    """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (255, 0, 0)
@@ -241,7 +236,7 @@ class Score:
         self.image = self.font.render(f"Bomb: *\{self.value}/*", 0, self.color)
         screen.blit(self.image, self.rect)
 
-class Gravity(pg.sprite.Sprite):
+class hissatu(pg.sprite.Sprite):
     def __init__(self,life:int):
         super().__init__()
         self.image = pg.Surface((WIDTH,HEIGHT))
@@ -278,7 +273,7 @@ def main():
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and event.key == pg.K_b:
                 if score.value>0:
-                    gra = Gravity(100)
+                    gra = hissatu(100)
                     gras.add(gra)
                     score.value -= 1
         screen.blit(bg_img, [0, 0])
@@ -305,8 +300,6 @@ def main():
             time.sleep(2)
             return
         
-        #for emy in pg.sprite.groupcollide(emys, gras, True, False).keys():
-            #exps.add(Explosion(emy, 100))
         for bomb in pg.sprite.groupcollide(bombs, gras, True, False).keys():
             exps.add(Explosion(bomb, 50))
             bird.change_img(6, screen)
