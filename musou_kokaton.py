@@ -6,8 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 1100  # ゲームウィンドウの幅
-HEIGHT = 650  # ゲームウィンドウの高さ
+WIDTH = 600  # ゲームウィンドウの幅
+HEIGHT = 700  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -231,28 +231,41 @@ class Score:
     """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 255)
-        self.value = 0
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.color = (255, 0, 0)
+        self.value = 3
+        self.image = self.font.render(f"Bomb: *\{self.value}/b*", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
 
     def update(self, screen: pg.Surface):
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.image = self.font.render(f"Bomb: *\{self.value}/*", 0, self.color)
         screen.blit(self.image, self.rect)
 
+class Gravity(pg.sprite.Sprite):
+    def __init__(self,life:int):
+        super().__init__()
+        self.image = pg.Surface((WIDTH,HEIGHT))
+        self.rect = self.image.get_rect()
+        pg.draw.rect(self.image,(255,0,255),(0,0,WIDTH,HEIGHT))
+        self.life = life
+        self.image.set_alpha(80)
+    def update(self,):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("死ぬな！こうかとん！！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
 
-    bird = Bird(3, (900, 400))
+    bird = Bird(3, (400, 300))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gras = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -263,6 +276,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_b:
+                if score.value>0:
+                    gra = Gravity(100)
+                    gras.add(gra)
+                    score.value -= 1
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -275,12 +293,10 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.value += 10  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():  # ビームと衝突した爆弾リスト
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-            score.value += 1  # 1点アップ
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
             bird.change_img(8, screen)  # こうかとん悲しみエフェクト
@@ -288,7 +304,15 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        #for emy in pg.sprite.groupcollide(emys, gras, True, False).keys():
+            #exps.add(Explosion(emy, 100))
+        for bomb in pg.sprite.groupcollide(bombs, gras, True, False).keys():
+            exps.add(Explosion(bomb, 50))
+            bird.change_img(6, screen)
 
+        gras.update()
+        gras.draw(screen)
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
