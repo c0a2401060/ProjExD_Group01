@@ -250,7 +250,7 @@ class Time:
     """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
-        self.color = (255, 0, 0)
+        self.color = (0, 0, 0)
         self.value = 60
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
@@ -281,6 +281,12 @@ def main():
 
         if tmr % 50 == 0:  #1秒ずつ減る
             get_time.value-=1
+
+        if get_time.value <= 55:
+            get_time.color = (255, 0, 0)
+            if tmr % 5 == 0:
+                get_time.color = (255, 255, 255)
+                
 
 
         key_lst = pg.key.get_pressed()
