@@ -248,7 +248,7 @@ class Score:
         screen.blit(self.image, self.rect)
 
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
@@ -276,8 +276,10 @@ def main():
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
+                for b in emy.three_Bombs(bird):
+                    bombs.add(b)
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                # bombs.add(Bomb(emy, bird))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             # exps.add(Explosion(emy, 100))  # 爆発エフェクト
