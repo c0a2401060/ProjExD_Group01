@@ -188,6 +188,11 @@ class Enemy(pg.sprite.Sprite):
         self.y_interval = 30
 
     def three_Bombs(self,bird) -> list:
+        """
+        自機狙いをする弾と左右にランダムに動く弾を生成し返す。
+        引数:bird Birdインスタンス
+        戻り値:Bombインスタンスのリスト        
+        """
         bombs =[Bomb(self,bird)] #自機を狙う
         count =0
         while count < 2:
@@ -257,7 +262,7 @@ def main():
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.y_interval == 0:
-               #for b in emy.three_Bombs(bird):
+               #for b in emy.three_Bombs(bird):ここがないと3弾はつかえない
                 bombs.add(Bomb(bird,emy))#(b)
                
 
