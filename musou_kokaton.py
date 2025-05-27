@@ -66,6 +66,7 @@ class Bird(pg.sprite.Sprite):
             (-1, +1): pg.transform.rotozoom(img0, 45, 0.9),  # 左下
             (0, +1): pg.transform.rotozoom(img, -90, 0.9),  # 下
             (+1, +1): pg.transform.rotozoom(img, -45, 0.9),  # 右下
+
         }
         self.dire = (+1, 0)
         self.image = self.imgs[self.dire]
@@ -228,7 +229,7 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"fig/{i}.png") for i in range(1, 4)]
+    imgs = [pg.image.load(f"fig/alien{2}.png") for i in range(1, 4)]
     
     def __init__(self, tmr):
         super().__init__()
@@ -274,11 +275,31 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+
+class Time:
+    """
+    制限時間を表示するクラス
+    制限時間：60秒
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 0)
+        self.value = 60
+        self.image = self.font.render(f"Time: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 300, HEIGHT-50
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Time: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)    
+
 def main():
     pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+
+    get_time = Time()
 
     bird = Bird(3, (300, 400))
     bombs = pg.sprite.Group()
@@ -290,6 +311,17 @@ def main():
     tmr = 0
     clock = pg.time.Clock()
     while True:
+
+        if tmr % 50 == 0:  #1秒ずつ減る
+            get_time.value-=1
+
+        if get_time.value <= 10 :
+            get_time.color = (255, 0, 0)
+            if tmr % 5 == 0:
+                get_time.color = (255, 255, 255)
+                
+
+
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -337,12 +369,12 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        get_time.update(screen)  
         pg.display.update()
         tmr += 1
         clock.tick(50)
 
-        if tmr == 3000:
-            time.sleep(2)
+        if tmr == 3000:  #  0秒で終了
             return
 
 
