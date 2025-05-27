@@ -1,5 +1,7 @@
 # 死ぬなこうかとん‼
 
+![title](fig/Screen_Shot2.png)
+
 ## 実行環境の必要条件
 * python >= 3.10
 * pygame >= 2.6.1
