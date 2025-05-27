@@ -6,10 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 600  # ゲームウィンドウの幅
-HEIGHT = 700  # ゲームウィンドウの高さ
-WIDTH = 600  # ゲームウィンドウの幅
-HEIGHT = 700  # ゲームウィンドウの高さ
+WIDTH = 700  # ゲームウィンドウの幅
+HEIGHT =600  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -137,20 +135,24 @@ class Bomb(pg.sprite.Sprite):
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
 
         if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
-            self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
-            if self.vx == 0 and self.vy == 0:
-                while True:
-                    self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
-                    if self.vx != 0 or self.vy != 0:
-                        break  
+            i = random.randint(0,2)
+            if i==0:
+                self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+                if self.vx == 0 and self.vy == 0:
+                    while True:
+                        self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+                        if self.vx != 0 or self.vy != 0:
+                            break
+            else: 
+                self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
 
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        
-        if bullet :#弾べクトルの方向を引数で受け取る
-            self.vx,self.vy = bullet
-        else:
-            self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
+        if 0 < tmr <= 1500:
+            if bullet :#弾べクトルの方向を引数で受け取る
+                self.vx,self.vy = bullet
+            else:
+                self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
         self.speed = 10
     def update(self,tmr):
         """
@@ -241,11 +243,11 @@ class Enemy(pg.sprite.Sprite):
     
     def __init__(self, tmr):
         super().__init__()
-        self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 0.8)
+        self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 2)
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
+        self.rect.center = ((WIDTH - 128) / 1.7, HEIGHT /7)
         self.vx, self.vy = 0, +6
-        self.bound = random.randint(50, HEIGHT//2)  # 停止位置
+        self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
             self.interval = random.randint(60,70)  # 爆弾投下インターバル
@@ -370,11 +372,14 @@ def main():
                     score.value -= 1
         screen.blit(bg_img, [0, 0])
 
-        if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
+        if tmr%3000 == 0:
             emys.add(Enemy(tmr))
+
+        # if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
+        #     emys.add(Enemy(tmr))
         
-        if tmr%100 ==0 and 1500 < tmr <= 3000: # 100フレームに1回，敵機を出現させる
-            emys.add(Enemy(tmr))
+        # if tmr%100 ==0 and 1500 < tmr <= 3000: # 100フレームに1回，敵機を出現させる
+        #     emys.add(Enemy(tmr))
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
