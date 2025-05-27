@@ -204,7 +204,7 @@ class Enemy(pg.sprite.Sprite):
                         continue #無効なベクトルをスキップ
                     bombs.append(Bomb(self,bird,bullet=(vx/norm,vy/norm)))
                     count +=1
-        #print(f"three_Bombs: 実際に返す弾の数 = {len(bombs)}") ここで出てる弾の数を確認できる
+        print(f"three_Bombs: 実際に返す弾の数 = {len(bombs)}") #ここで出てる弾の数を確認できる
         return bombs
 
     def update(self):
@@ -257,13 +257,13 @@ def main():
                 return 0
         screen.blit(bg_img, [0, 0])
 
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+        if tmr%700 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.y_interval == 0:
-               #for b in emy.three_Bombs(bird):ここがないと3弾はつかえない
-                bombs.add(Bomb(bird,emy))#(b)
+               for b in emy.three_Bombs(bird):#ここがないと3弾はつかえない
+                bombs.add(b)
                
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
