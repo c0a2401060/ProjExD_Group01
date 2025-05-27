@@ -285,22 +285,32 @@ class Enemy(pg.sprite.Sprite):
         self.rect.move_ip(self.vx, self.vy)
 
 class Score:
-    """
-    打ち落とした爆弾，敵機の数をスコアとして表示するクラス
-    爆弾：1点
-    敵機：10点
-    """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 255)
-        self.value = 0
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.color = (255, 0, 0)
+        self.value = 3
+        self.image = self.font.render(f"Bomb: *\{self.value}/b*", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+        self.rect.center = 500, HEIGHT-50
 
     def update(self, screen: pg.Surface):
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.image = self.font.render(f"Bomb: *\{self.value}/*", 0, self.color)
         screen.blit(self.image, self.rect)
+
+class hissatu(pg.sprite.Sprite):
+    def __init__(self,life:int):
+        super().__init__()
+        self.image = pg.Surface((WIDTH,HEIGHT))
+        self.rect = self.image.get_rect()
+        pg.draw.rect(self.image,(255,0,255),(0,0,WIDTH,HEIGHT))
+        self.life = life
+        self.image.set_alpha(80)
+    def update(self,):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+
+    
 
 
 class Time:
@@ -332,6 +342,7 @@ def main():
     bombs = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gras = pg.sprite.Group()
 
     # time = Time()
     tmr = 0
@@ -352,6 +363,11 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
+            if event.type == pg.KEYDOWN and event.key == pg.K_b:
+                if score.value>0:
+                    gra = hissatu(100)
+                    gras.add(gra)
+                    score.value -= 1
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
@@ -376,7 +392,13 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        for bomb in pg.sprite.groupcollide(bombs, gras, True, False).keys():
+            exps.add(Explosion(bomb, 50))
+            bird.change_img(6, screen)
 
+        gras.update()
+        gras.draw(screen)
         bird.update(key_lst, screen)
         emys.update()
         emys.draw(screen)
