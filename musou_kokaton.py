@@ -153,14 +153,15 @@ class Bomb(pg.sprite.Sprite):
                 self.vx,self.vy = bullet
             else:
                 self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
-        self.speed = 10
+        self.speed = 12
     def update(self,tmr):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
         if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
-            self.speed = 4
+            j = random.randint(3,8)
+            self.speed = j
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         
         else: #時間が３０秒未満なら爆弾の動きは通常
@@ -250,10 +251,10 @@ class Enemy(pg.sprite.Sprite):
         self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
-            self.interval = random.randint(60,70)  # 爆弾投下インターバル
+            self.interval = random.randint(40, 45)  # 爆弾投下インターバル
 
         if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
-            self.interval = random.randint(25, 32)
+            self.interval =5
 
     def three_Bombs(self,bird,tmr) -> list:
         """
@@ -367,7 +368,7 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_b:
                 if score.value>0:
-                    gra = hissatu(100)
+                    gra = hissatu(50)
                     gras.add(gra)
                     score.value -= 1
         screen.blit(bg_img, [0, 0])
