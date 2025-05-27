@@ -401,7 +401,6 @@ def main():
         if tmr == 3000:  #  0秒で終了
             return
         
-
         def gameover(screen: pg.surface) -> None: 
             screen.blit(bo_img, [0, 0])
             screen.blit(txt, [147,250])
@@ -409,6 +408,9 @@ def main():
             pg.display.update()
             time.sleep(3)
             return
+        
+
+        
 
 
 if __name__ == "__main__":
