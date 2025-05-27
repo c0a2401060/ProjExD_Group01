@@ -8,6 +8,8 @@ import pygame as pg
 
 WIDTH = 600  # ゲームウィンドウの幅
 HEIGHT = 700  # ゲームウィンドウの高さ
+WIDTH = 600  # ゲームウィンドウの幅
+HEIGHT = 700  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -34,6 +36,8 @@ def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
     """
     x_diff, y_diff = dst.centerx-org.centerx, dst.centery-org.centery
     norm = math.sqrt(x_diff**2+y_diff**2)
+    if norm < 2:
+        return(0,1)
     return x_diff/norm, y_diff/norm
 
 
@@ -81,6 +85,7 @@ class Bird(pg.sprite.Sprite):
         引数2 screen：画面Surface
         """
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -115,7 +120,7 @@ class Bomb(pg.sprite.Sprite):
     """
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "Enemy", bird: Bird, tmr):
+    def __init__(self, emy: "Enemy", bird: Bird, tmr, bullet:tuple[float,float]=None,):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
@@ -141,9 +146,13 @@ class Bomb(pg.sprite.Sprite):
 
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
+        
+        if bullet :#弾べクトルの方向を引数で受け取る
+            self.vx,self.vy = bullet
+        else:
+            self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
         self.speed = 10
-
-    def update(self, tmr):
+    def update(self,tmr):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
@@ -196,7 +205,6 @@ class Beam(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
-
 class Explosion(pg.sprite.Sprite):
     """
     爆発に関するクラス
@@ -240,10 +248,30 @@ class Enemy(pg.sprite.Sprite):
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
-            self.interval = random.randint(60, 70)  # 爆弾投下インターバル
+            self.interval = random.randint(60,70)  # 爆弾投下インターバル
 
         if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
             self.interval = random.randint(25, 32)
+
+    def three_Bombs(self,bird,tmr) -> list:
+        """
+        自機狙いをする弾と左右にランダムに動く弾を生成し返す。
+        引数:bird Birdインスタンス
+        戻り値:Bombインスタンスのリスト        
+        """
+        bombs =[Bomb(self,bird,tmr)] #自機を狙う
+        count =0
+        while count < 2:
+                    angle = random.uniform(-math.pi/3,math.pi/3) #ランダムに左右に弾を放つ
+                    vx = math.sin(angle) #
+                    vy = math.cos(angle) #
+                    norm = math.hypot(vx,vy)
+                    if norm == 0:
+                        continue #無効なベクトルをスキップ
+                    bombs.append(Bomb(self,bird,tmr,bullet=(vx/norm,vy/norm)))
+                    count +=1
+        print(f"three_Bombs: 実際に返す弾の数 = {len(bombs)}") #ここで出てる弾の数を確認できる
+        return bombs
 
     def update(self):
         """
@@ -255,7 +283,6 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
-
 
 class Score:
     """
@@ -303,7 +330,6 @@ def main():
 
     bird = Bird(3, (300, 400))
     bombs = pg.sprite.Group()
-    beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
@@ -326,8 +352,6 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
@@ -338,19 +362,13 @@ def main():
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
-                for b in emy.three_Bombs(bird):
-                    bombs.add(b)
+                if 0 < tmr <= 1500:
+                    for b in emy.three_Bombs(bird,tmr):
+                        bombs.add(b)
+                else:
+                    bombs.add(Bomb(emy,bird,tmr))
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird, tmr))
 
-        for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
-            # exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.value += 10  # 10点アップ
-            bird.change_img(6, screen)  # こうかとん喜びエフェクト
-
-        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():  # ビームと衝突した爆弾リスト
-            # exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-            score.value += 1  # 1点アップ
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
             bird.change_img(8, screen)  # こうかとん悲しみエフェクト
@@ -360,8 +378,6 @@ def main():
             return
 
         bird.update(key_lst, screen)
-        beams.update()
-        beams.draw(screen)
         emys.update()
         emys.draw(screen)
         bombs.update(tmr)
