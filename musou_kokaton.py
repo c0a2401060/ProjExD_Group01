@@ -230,7 +230,7 @@ class Score:
         self.value = 3
         self.image = self.font.render(f"Bomb: *\{self.value}/b*", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+        self.rect.center = 500, HEIGHT-50
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Bomb: *\{self.value}/*", 0, self.color)
