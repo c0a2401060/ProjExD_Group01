@@ -6,8 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 700  # ゲームウィンドウの幅
-HEIGHT =600  # ゲームウィンドウの高さ
+WIDTH = 600  # ゲームウィンドウの幅
+HEIGHT =700  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -251,7 +251,7 @@ class Enemy(pg.sprite.Sprite):
         self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
-            self.interval = random.randint(40, 45)  # 爆弾投下インターバル
+            self.interval = random.randint(60, 65)  # 爆弾投下インターバル
 
         if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
             self.interval =5
@@ -264,7 +264,7 @@ class Enemy(pg.sprite.Sprite):
         """
         bombs =[Bomb(self,bird,tmr)] #自機を狙う
         count =0
-        while count < 2:
+        while count < random.randint(5,15):
                     angle = random.uniform(-math.pi/3,math.pi/3) #ランダムに左右に弾を放つ
                     vx = math.sin(angle) #
                     vy = math.cos(angle) #
