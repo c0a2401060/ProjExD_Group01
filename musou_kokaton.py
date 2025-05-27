@@ -318,7 +318,7 @@ class Time:
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
-        screen.blit(self.image, self.rect)    
+        screen.blit(self.image, self.rect)   
 
 def main():
     pg.display.set_caption("死ぬなこうかとん‼")
@@ -332,6 +332,15 @@ def main():
     bombs = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+
+    # ゲームオーバー画面
+    ck_img = pg.image.load("fig/8.png")  # 泣いているこうかとん画像
+    bo_img = pg.Surface((WIDTH, HEIGHT))  # ブラックアウト画面
+    pg.draw.rect(bo_img, (0,0,0),pg.Rect(0,0,WIDTH,HEIGHT))
+    bo_img.set_alpha(170) 
+    fonto = pg.font.Font(None,80)  # 文字
+    txt = fonto.render("Game Over",True, (255,255,255))
+
 
     # time = Time()
     tmr = 0
@@ -371,10 +380,9 @@ def main():
 
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
-            bird.change_img(8, screen)  # こうかとん悲しみエフェクト
+            gameover(screen)
             score.update(screen)
             pg.display.update()
-            time.sleep(2)
             return
 
         bird.update(key_lst, screen)
@@ -391,6 +399,15 @@ def main():
         clock.tick(50)
 
         if tmr == 3000:  #  0秒で終了
+            return
+        
+
+        def gameover(screen: pg.surface) -> None: 
+            screen.blit(bo_img, [0, 0])
+            screen.blit(txt, [147,250])
+            screen.blit(ck_img,[280,330])
+            pg.display.update()
+            time.sleep(3)
             return
 
 
