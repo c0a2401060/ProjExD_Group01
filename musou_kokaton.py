@@ -6,8 +6,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 1100  # ゲームウィンドウの幅
-HEIGHT = 650  # ゲームウィンドウの高さ
+WIDTH = 600  # ゲームウィンドウの幅
+HEIGHT = 700  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -55,7 +55,7 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -80,7 +80,7 @@ class Bird(pg.sprite.Sprite):
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.5)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -94,6 +94,12 @@ class Bird(pg.sprite.Sprite):
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+            
+            if key_lst[pg.K_LSHIFT]:  # 左Shiftを押しているとき低速化
+                self.speed = 3
+            else:
+                self.speed = 10
+
         self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
@@ -109,33 +115,56 @@ class Bomb(pg.sprite.Sprite):
     """
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "Enemy", bird: Bird):
+    def __init__(self, emy: "Enemy", bird: Bird, tmr):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        rad = 15  # 爆弾円の半径：10以上50以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
         color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
         pg.draw.circle(self.image, color, (rad, rad), rad)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
+
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
+            self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+            if self.vx == 0 and self.vy == 0:
+                while True:
+                    self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
+                    if self.vx != 0 or self.vy != 0:
+                        break  
+
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        self.speed = 6
+        self.speed = 10
 
-    def update(self):
+    def update(self, tmr):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
+            self.speed = 4
+            self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        
+        else: #時間が３０秒未満なら爆弾の動きは通常
+            self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+
+        
         if check_bound(self.rect) != (True, True):
-            self.kill()
+            if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾の動きは反射
+                self.vx *= -1
+                self.vy *= -1
+                self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+
+            if tmr < 1500: # 時間が３０秒未満なら通常
+                self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+                self.kill()
 
 
 class Beam(pg.sprite.Sprite):
@@ -202,7 +231,7 @@ class Enemy(pg.sprite.Sprite):
     """
     imgs = [pg.image.load(f"fig/alien{2}.png") for i in range(1, 4)]
     
-    def __init__(self):
+    def __init__(self, tmr):
         super().__init__()
         self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 0.8)
         self.rect = self.image.get_rect()
@@ -210,7 +239,11 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
+            self.interval = random.randint(60, 70)  # 爆弾投下インターバル
+
+        if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
+            self.interval = random.randint(25, 32)
 
     def update(self):
         """
@@ -260,21 +293,21 @@ class Time:
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)    
 
-
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
 
     get_time = Time()
 
-    bird = Bird(3, (900, 400))
+    bird = Bird(3, (300, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
+    # time = Time()
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -297,21 +330,26 @@ def main():
                 beams.add(Beam(bird))
         screen.blit(bg_img, [0, 0])
 
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+        if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy(tmr))
+        
+        if tmr%100 ==0 and 1500 < tmr <= 3000: # 100フレームに1回，敵機を出現させる
+            emys.add(Enemy(tmr))
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
+                for b in emy.three_Bombs(bird):
+                    bombs.add(b)
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                bombs.add(Bomb(emy, bird, tmr))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
-            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            # exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():  # ビームと衝突した爆弾リスト
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            # exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
@@ -326,7 +364,7 @@ def main():
         beams.draw(screen)
         emys.update()
         emys.draw(screen)
-        bombs.update()
+        bombs.update(tmr)
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
