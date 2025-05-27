@@ -390,7 +390,7 @@ def main():
                     score.value -= 1
         screen.blit(bg_img, [0, 0])
 
-        if tmr%3000 == 0:
+        if tmr%8000 == 0:
             emys.add(Enemy(tmr))
 
         # if tmr%200 == 0 and tmr < 1500:  # 200フレームに1回，敵機を出現させる
