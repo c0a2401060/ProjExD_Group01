@@ -153,7 +153,7 @@ class Bomb(pg.sprite.Sprite):
                 self.vx,self.vy = bullet
             else:
                 self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
-        self.speed = 12
+        self.speed = 9
     def update(self,tmr):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
@@ -333,6 +333,23 @@ class Time:
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)    
 
+bird = Bird(3, (300, 400))
+img1 = pg.Surface((WIDTH, HEIGHT))
+img1.set_alpha((180))
+
+def gameclear(screen: pg.Surface) -> None:
+        screen.blit(img1,(0, 0))  # ブラックアウト
+        pg.draw.rect(img1, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+        img2 =  pg.image.load("fig/9.png")
+        bird.change_img(9, screen)
+        fonto = pg.font.Font(None, 80)
+        txt = fonto.render("Game clear!", True, (255, 0, 0))
+        screen.blit(txt, [147, 250])  # テキストの表示
+        screen.blit(img2, [280, 330])  # こうかとんの表示
+        pg.display.update()
+        time.sleep(4)
+        return
+
 def main():
     pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -419,6 +436,7 @@ def main():
         clock.tick(50)
 
         if tmr == 9000:  #  0秒で終了
+            gameclear(screen)
             return
 
 
