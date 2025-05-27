@@ -134,7 +134,7 @@ class Bomb(pg.sprite.Sprite):
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
 
-        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
+        if 4500 < tmr <= 9000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
             i = random.randint(0,2)
             if i==0:
                 self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
@@ -148,7 +148,7 @@ class Bomb(pg.sprite.Sprite):
 
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        if 0 < tmr <= 1500:
+        if 0 < tmr <= 4500:
             if bullet :#弾べクトルの方向を引数で受け取る
                 self.vx,self.vy = bullet
             else:
@@ -159,7 +159,7 @@ class Bomb(pg.sprite.Sprite):
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        if 1500 < tmr <= 3000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
+        if 4500 < tmr <= 9000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
             j = random.randint(3,8)
             self.speed = j
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
@@ -169,12 +169,12 @@ class Bomb(pg.sprite.Sprite):
 
         
         if check_bound(self.rect) != (True, True):
-            if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾の動きは反射
+            if 4500 < tmr <= 9000: #時間が３０秒から６０秒なら爆弾の動きは反射
                 self.vx *= -1
                 self.vy *= -1
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
 
-            if tmr < 1500: # 時間が３０秒未満なら通常
+            if tmr <= 4500: # 時間が３０秒未満なら通常
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
                 self.kill()
 
@@ -250,10 +250,10 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        if tmr < 1500:#時間が３０秒未満なら爆弾インターバルを短く
+        if tmr < 4500:#時間が３０秒未満なら爆弾インターバルを短く
             self.interval = random.randint(40, 45)  # 爆弾投下インターバル
 
-        if 1500 < tmr <= 3000: #時間が３０秒から６０秒なら爆弾インターバルを短く
+        if 4500 < tmr <= 9000: #時間が３０秒から６０秒なら爆弾インターバルを短く
             self.interval =5
 
     def three_Bombs(self,bird,tmr) -> list:
@@ -324,7 +324,7 @@ class Time:
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 0)
-        self.value = 60
+        self.value = 180
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 300, HEIGHT-50
@@ -384,7 +384,7 @@ def main():
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
-                if 0 < tmr <= 1500:
+                if 0 < tmr <= 4500:
                     for b in emy.three_Bombs(bird,tmr):
                         bombs.add(b)
                 else:
@@ -418,7 +418,7 @@ def main():
         tmr += 1
         clock.tick(50)
 
-        if tmr == 3000:  #  0秒で終了
+        if tmr == 9000:  #  0秒で終了
             return
 
 
