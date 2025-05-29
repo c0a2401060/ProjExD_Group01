@@ -3,6 +3,7 @@ import os
 import random
 import sys
 import time
+import wave
 import pygame as pg
 
 
@@ -338,6 +339,7 @@ img1 = pg.Surface((WIDTH, HEIGHT))
 img1.set_alpha((180))
 
 def gameclear(screen: pg.Surface) -> None:
+        pg.mixer.music.stop()
         screen.blit(img1,(0, 0))  # ブラックアウト
         pg.draw.rect(img1, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
         img2 =  pg.image.load("fig/9.png")
@@ -354,7 +356,15 @@ def main():
     pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
-    score = Score()
+
+    battle_BGM = f"fig/Eye-for-an-EyeT.wav"
+    with wave.open(battle_BGM,"rb") as f:
+        channels =f.getnchannels()
+        width = f.getsampwidth()
+        rate = f.getframerate()
+    pg.mixer.init(frequency=rate,size=-width*8,channels=channels)
+    pg.mixer.music.load(battle_BGM)
+    pg.mixer.music.play()
 
     get_time = Time()
 
@@ -363,6 +373,8 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gras = pg.sprite.Group()
+
+    score = Score()
 
     # ゲームオーバー画面
     ck_img = pg.image.load("fig/8.png")  # 泣いているこうかとん画像
@@ -448,6 +460,7 @@ def main():
             return
         
         def gameover(screen: pg.surface) -> None: 
+            pg.mixer.music.stop()
             screen.blit(bo_img, [0, 0])
             screen.blit(txt, [147,250])
             screen.blit(ck_img,[280,330])
