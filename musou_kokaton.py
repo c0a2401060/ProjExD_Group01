@@ -119,14 +119,19 @@ class Bomb(pg.sprite.Sprite):
     """
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "Enemy", bird: Bird, tmr, bullet:tuple[float,float]=None,):
+    def __init__(self, emy: "Enemy", bird: Bird, tmr:int, bullet:tuple[float,float]=None,):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
+        引数3 tmr：攻撃方法変更時の参照時間
+        引数4 bullet：弾べクトルの方向を表すタプル
         """
         super().__init__()
-        rad = 15  # 爆弾円の半径：10以上50以下の乱数
+        if 4500 < tmr <= 9000: #時間が90秒から180秒の間なら爆弾の大きさをランダムにする
+            rad =random.randint(5,11)
+        else: #時間が90秒までなら爆弾の大きさを13に固定する
+            rad = 13
         self.image = pg.Surface((2*rad, 2*rad))
         color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
         pg.draw.circle(self.image, color, (rad, rad), rad)
@@ -135,47 +140,49 @@ class Bomb(pg.sprite.Sprite):
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
 
-        if 4500 < tmr <= 9000: #時間が３０秒から６０秒の間なら爆弾の動きをランダムに動かす
-            i = random.randint(0,2)
-            if i==0:
+        if 4500 < tmr <= 9000: #時間が90秒から180秒の間なら爆弾の動きをランダムに動かす
+            i = random.randint(0,3)
+            if i==0: # 1/3の確率でランダムにボムを飛ばす
                 self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
-                if self.vx == 0 and self.vy == 0:
+                if self.vx == 0 and self.vy == 0: # どちらも0だった場合に、どちらかが0じゃなくなるまでランダムを回し続ける
                     while True:
                         self.vx, self.vy = random.randint(-1,1), random.randint(0,1)
                         if self.vx != 0 or self.vy != 0:
                             break
-            else: 
+            else: # 2/3の確率でこうかとんに向けてボムを飛ばす
                 self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
 
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        if 0 < tmr <= 4500:
+        if 0 < tmr <= 4500: #時間が90秒以下の時
             if bullet :#弾べクトルの方向を引数で受け取る
                 self.vx,self.vy = bullet
-            else:
+            else: # 自機にに向けて発射する
                 self.vx,self.vy = calc_orientation(emy.rect,bird.rect)
         self.speed = 9
-    def update(self,tmr):
+
+    def update(self,tmr:int):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
+        引数 tmr：時間経過に伴った反射・消滅の仕様変更
         """
-        if 4500 < tmr <= 9000: #時間が３０秒から６０秒の間なら爆弾の動きを遅くする
+        if 4500 < tmr <= 9000: #時間が90秒から180秒の間なら爆弾の動きを遅くする
             j = random.randint(3,8)
             self.speed = j
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         
-        else: #時間が３０秒未満なら爆弾の動きは通常
+        else: #時間が90秒未満なら爆弾の動きは通常
             self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
 
         
         if check_bound(self.rect) != (True, True):
-            if 4500 < tmr <= 9000: #時間が３０秒から６０秒なら爆弾の動きは反射
+            if 4500 < tmr <= 9000: #時間が90秒から180秒なら爆弾の動きは反射
                 self.vx *= -1
                 self.vy *= -1
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
 
-            if tmr <= 4500: # 時間が３０秒未満なら通常
+            if tmr <= 4500: # 時間が90秒未満なら画面端で消滅
                 self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
                 self.kill()
 
@@ -183,6 +190,7 @@ class Bomb(pg.sprite.Sprite):
 class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
+    残してあるが使う予定なし
     """
     def __init__(self, bird: Bird):
         """
@@ -251,10 +259,10 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//8)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        if tmr < 4500:#時間が３０秒未満なら爆弾インターバルを短く
-            self.interval = random.randint(40, 45)  # 爆弾投下インターバル
+        if tmr < 4500:#時間が90秒未満なら爆弾インターバルを短く
+            self.interval = random.randint(40, 45)  # 爆弾投下インターバルをランダムに指定する
 
-        if 4500 < tmr <= 9000: #時間が３０秒から６０秒なら爆弾インターバルを短く
+        if 4500 < tmr <= 9000: #時間が90秒から180秒なら爆弾インターバルを短く
             self.interval =5
 
     def three_Bombs(self,bird,tmr) -> list:
@@ -274,7 +282,7 @@ class Enemy(pg.sprite.Sprite):
                         continue #無効なベクトルをスキップ
                     bombs.append(Bomb(self,bird,tmr,bullet=(vx/norm,vy/norm)))
                     count +=1
-        print(f"three_Bombs: 実際に返す弾の数 = {len(bombs)}") #ここで出てる弾の数を確認できる
+        # print(f"three_Bombs: 実際に返す弾の数 = {len(bombs)}") #ここで出てる弾の数を確認できる
         return bombs
 
     def update(self):
@@ -289,7 +297,13 @@ class Enemy(pg.sprite.Sprite):
         self.rect.move_ip(self.vx, self.vy)
 
 class Score:
+    """
+    必殺技の使用回数についてのクラス
+    """
     def __init__(self):
+        """
+        必殺技の残り使用回数を画面上に表示する
+        """
         self.font = pg.font.Font(None, 50)
         self.color = (255, 0, 0)
         self.value = 3
@@ -298,10 +312,17 @@ class Score:
         self.rect.center = 500, HEIGHT-50
 
     def update(self, screen: pg.Surface):
+        """
+        必殺技の回数を変更する
+        引数 screen：画面Surface
+        """
         self.image = self.font.render(f"Bomb: *\{self.value}/*", 0, self.color)
         screen.blit(self.image, self.rect)
 
 class hissatu(pg.sprite.Sprite):
+    """
+    Bキー押下で敵の攻撃を爆発エフェクトとともに数秒間消滅させる
+    """
     def __init__(self,life:int):
         super().__init__()
         self.image = pg.Surface((WIDTH,HEIGHT))
@@ -309,7 +330,12 @@ class hissatu(pg.sprite.Sprite):
         pg.draw.rect(self.image,(255,0,255),(0,0,WIDTH,HEIGHT))
         self.life = life
         self.image.set_alpha(80)
-    def update(self,):
+
+    def update(self):
+        """
+        必殺時間を1減算した必殺経過時間_lifeに応じてSurfaceを切り替えることで
+        必殺エフェクトを表現する
+        """
         self.life -= 1
         if self.life < 0:
             self.kill()
@@ -323,14 +349,21 @@ class Time:
     制限時間：60秒
     """
     def __init__(self):
+        """
+        制限時間を画面上に表示する
+        """
         self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 0)
+        self.color = (255, 255, 255)
         self.value = 180
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 300, HEIGHT-50
 
     def update(self, screen: pg.Surface):
+        """
+        残り時間の秒数を変更する
+        引数 screen：画面Surface
+        """
         self.image = self.font.render(f"Time: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)   
 
@@ -339,6 +372,10 @@ img1 = pg.Surface((WIDTH, HEIGHT))
 img1.set_alpha((180))
 
 def gameclear(screen: pg.Surface) -> None:
+        """
+        制限時間まで生き延びた場合にクリア画面を表示する
+        引数 screen：画面Surface
+        """
         pg.mixer.music.stop()
         screen.blit(img1,(0, 0))  # ブラックアウト
         pg.draw.rect(img1, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
@@ -355,7 +392,7 @@ def gameclear(screen: pg.Surface) -> None:
 def main():
     pg.display.set_caption("死ぬなこうかとん‼")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load(f"fig/pg_bg.jpg")
+    bg_img = pg.image.load(f"fig/bg_boss.jpg")
 
     battle_BGM = f"fig/Eye-for-an-EyeT.wav"
     with wave.open(battle_BGM,"rb") as f:
@@ -459,7 +496,11 @@ def main():
             gameclear(screen)
             return
         
-        def gameover(screen: pg.surface) -> None: 
+        def gameover(screen: pg.surface) -> None:
+            """
+            こうかとんが攻撃にヒットした場合にゲームオーバー画面を表示する
+            引数 screen：画面Surface
+            """ 
             pg.mixer.music.stop()
             screen.blit(bo_img, [0, 0])
             screen.blit(txt, [147,250])
